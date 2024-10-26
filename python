@@ -1,0 +1,61 @@
+# Install Django and create a new project
+# pip install django
+django-admin startproject educational_app
+cd educational_app
+python manage.py startapp api
+
+# api/models.py
+from django.db import models
+from django.contrib.auth.models import User
+
+class Content(models.Model):
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    file = models.FileField(upload_to='content/')
+    created_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+class Quiz(models.Model):
+    title = models.CharField(max_length=255)
+    questions = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+# api/views.py
+from rest_framework import viewsets
+from .models import Content, Quiz
+from .serializers import ContentSerializer, QuizSerializer
+
+class ContentViewSet(viewsets.ModelViewSet):
+    queryset = Content.objects.all()
+    serializer_class = ContentSerializer
+
+class QuizViewSet(viewsets.ModelViewSet):
+    queryset = Quiz.objects.all()
+    serializer_class = QuizSerializer
+
+# api/serializers.py
+from rest_framework import serializers
+from .models import Content, Quiz
+
+class ContentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Content
+        fields = '__all__'
+
+class QuizSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Quiz
+        fields = '__all__'
+
+# educational_app/urls.py
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from api.views import ContentViewSet, QuizViewSet
+
+router = DefaultRouter()
+router.register(r'content', ContentViewSet)
+router.register(r'quizzes', QuizViewSet)
+
+urlpatterns = [
+    path('api/', include(router.urls)),
+]
